@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>老闆專區 - 請假列表</title>
+</head>
+<body>
+
+  <h1>**公司請假系統</h1>
+  <p id="welcome"></p>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const username = localStorage.getItem('username');
+      document.getElementById('welcome').innerText = `您好，${username}`;
+    });
+  </script>
+  <h2>所有員工請假申請一覽表</h2>
+
+<table border ="1">
+    <thead>
+      <tr>
+        <th>請假單 ID</th>
+        <th>員工名稱</th>
+        <th>日期</th>
+        <th>原因</th>
+        <th>狀態</th>
+      </tr>
+    </thead>
+    <tbody id="leaveTableBody">
+      <!-- 資料將會動態填入 -->
+    </tbody>
+  </table>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const token = localStorage.getItem('token');
+
+      if (!token) {
+        alert('請先登入');
+        window.location.href = 'login.html';
+        return;
+      }
+
+      try {
+        const res = await fetch('http://localhost:3000/api/leave/all', {
+          headers: {
+            'Authorization': 'Bearer ' + token
+          }
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          const tbody = document.getElementById('leaveTableBody');
+          data.forEach(item => {
+            const row = document.createElement('tr');
+
+            const idCell = document.createElement('td');
+            idCell.innerText = item.id;
+
+            const usernameCell = document.createElement('td');
+            usernameCell.innerText = item.username;
+
+            const dateCell = document.createElement('td');
+            dateCell.innerText = item.date;
+
+            const reasonCell = document.createElement('td');
+            reasonCell.innerText = item.reason;
+
+            const statusCell = document.createElement('td');
+            statusCell.innerText = item.status || '尚未設定';
+
+            const actionCell = document.createElement('td');
+            if (item.status === 'pending') {
+              const approveBtn = document.createElement('button');
+              approveBtn.innerText = '✅ 批准';
+              approveBtn.addEventListener('click', () => handleReview(item.id, 'approved'));
+
+              const rejectBtn = document.createElement('button');
+              rejectBtn.innerText = '❌ 拒絕';
+              rejectBtn.addEventListener('click', () => handleReview(item.id, 'rejected'));
+
+              actionCell.appendChild(approveBtn);
+              actionCell.appendChild(rejectBtn);
+            } else {
+              actionCell.innerText = '已審核';
+            }
+
+            row.appendChild(idCell);
+            row.appendChild(usernameCell);
+            row.appendChild(dateCell);
+            row.appendChild(reasonCell);
+            row.appendChild(statusCell);
+            row.appendChild(actionCell);
+
+            tbody.appendChild(row);
+          });
+        } else {
+          alert('無法取得請假資料：' + data.message);
+        }
+      } catch (err) {
+        alert('錯誤：' + err.message);
+      }
+    });
+
+    async function handleReview(leaveId, decision) {
+      const token = localStorage.getItem('token');
+
+      try {
+        const res = await fetch('http://localhost:3000/api/leave/approve', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
+          },
+          body: JSON.stringify({ leaveId, decision })
+        });
+
+        const result = await res.json();
+        alert(result.message || '操作成功');
+        window.location.reload(); // 重新載入畫面更新狀態
+      } catch (err) {
+        alert('審核失敗：' + err.message);
+      }
+    }
+  </script>
+
+  </body>
+</html>

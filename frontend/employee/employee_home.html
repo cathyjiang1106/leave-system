@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>員工首頁</title>
+</head>
+<body>
+  <h1>歡迎使用請假系統</h1>
+  <p id="welcome"></p>
+
+  <button onclick="location.href='leave_form.html'">✍️ 我要請假</button>
+  <button onclick="location.href='my_leave.html'">📋 查看我的請假紀錄</button>
+
+  <script>
+    const username = localStorage.getItem('username');
+    document.getElementById('welcome').innerText = `嗨，${username}`;
+  </script>
+</body>
+</html>
